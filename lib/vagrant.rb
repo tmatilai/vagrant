@@ -140,7 +140,19 @@ module Vagrant
   # be used from the Vagrantfile to easily branch based on plugin
   # availability.
   def self.has_plugin?(name)
-    plugin("2").manager.registered.any? { |plugin| plugin.name == name }
+    # Try to find gem specification by the name
+    gem = Gem::Specification.find { |spec| spec.name == name }
+
+    plugin("2").manager.registered.any? do |plugin|
+      if gem
+        # Check if the plugin is included in the gem
+        plugin.data[:plugin_path].start_with?("#{gem.gem_dir}/")
+      else
+        # Fallback matching the plugin name
+        # TODO: Add deprecation warning in v1.5.0?
+        plugin.name == name
+      end
+    end
   end
 
   # Returns a superclass to use when creating a plugin for Vagrant.

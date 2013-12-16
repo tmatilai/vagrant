@@ -72,20 +72,37 @@ describe Vagrant do
   end
 
   describe "has_plugin?" do
+    before(:each) do
+      plugin = Class.new(described_class.plugin('2')) do
+        name "i_am_installed"
+      end
+      plugin.data[:plugin_path] = "/foo/bar/lib/plugin.rb"
+
+      Gem::Specification.stub(:_all) do
+        [
+          double(name: "other_gem", gem_dir: "/foo/zah"),
+          double(name: "plugin_gem", gem_dir: "/foo/bar")
+        ]
+      end
+    end
     after(:each) do
       described_class.plugin('2').manager.reset!
     end
 
-    it "should return true if the plugin is installed" do
-      plugin = Class.new(described_class.plugin('2')) do
-        name "i_am_installed"
-      end
+    it "should find the installed plugin by the gem name" do
+      expect(described_class.has_plugin?("plugin_gem")).to be_true
+    end
 
-      described_class.has_plugin?("i_am_installed").should be_true
+    it "should find the installed plugin by the registered name" do
+      expect(described_class.has_plugin?("i_am_installed")).to be_true
+    end
+
+    it "should return false if the gem is not a plugin" do
+      expect(described_class.has_plugin?("other_gem")).to be_false
     end
 
     it "should return false if the plugin is not installed" do
-      described_class.has_plugin?("i_dont_exist").should be_false
+      expect(described_class.has_plugin?("i_dont_exist")).to be_false
     end
   end
 

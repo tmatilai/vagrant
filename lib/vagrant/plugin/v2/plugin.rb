@@ -46,8 +46,13 @@ module Vagrant
           # we register.
           result = get_or_set(:name, name)
 
-          # The plugin should be registered if we're setting a real name on it
-          Plugin.manager.register(self) if name != UNSET_VALUE
+          if name != UNSET_VALUE
+            # Store the path of the plugin file so we can later find the gem
+            data[:plugin_path] = caller.first[/^[^:]+/]
+
+            # The plugin should be registered if we're setting a real name on it
+            Plugin.manager.register(self)
+          end
 
           # Return the result
           result
